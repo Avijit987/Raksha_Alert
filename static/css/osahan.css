@@ -995,7 +995,7 @@ Version: 1.0
      padding: 12px 16px;
 }
  .login-main-right .owl-theme .owl-controls .owl-page.active span, .login-main-right .owl-theme .owl-controls .owl-page span:hover {
-     background: #ff516b;
+     background: #8781bd;
     /* Old browsers */
      background: -moz-linear-gradient(-45deg, #9fcaff  0%, #826cfd 100%);
     /* FF3.6-15 */
@@ -1155,6 +1155,12 @@ Version: 1.0
      margin: 5px 0 0;
      object-fit: scale-down;
      padding: 3px 4px;
+}
+
+.img-thumbnail {
+    width: 200px;
+    height: 200px;
+    object-fit: cover; /* Ensures the image covers the space without stretching */
 }
 /* Mobile Media */
 /* Extra small devices (portrait phones, less than 576px) */
