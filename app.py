@@ -14,10 +14,7 @@ from email.mime.text import MIMEText
 from werkzeug.utils import secure_filename
 
 
-
 app = Flask(__name__)
-
-
 app.config['STATIC_FOLDER'] = 'static'
 IMG_FOLDER = os.path.join('static', 'img', 'unknown')
 
@@ -28,7 +25,6 @@ app.secret_key = "supersecretkey"
 UPLOAD_FOLDER = os.path.join('static', 'img', 'known')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
-neighbors = []
 
 # Email configuration
 smtp_server = "smtp.gmail.com"
@@ -58,8 +54,8 @@ for image_name in os.listdir(known_faces_dir):
         known_face_names.append(os.path.splitext(image_name)[0])
 
 # Video stream URL
-#video_url = 'http://192.168.1.112:8080/video'
-cap = cv2.VideoCapture(0)
+video_url = 'http://192.168.1.112:8080/video'
+cap = cv2.VideoCapture(video_url)
 
 # Sending email with the captured image
 def send_email_with_image(unknown_image_path):
@@ -217,49 +213,38 @@ def allowed_file(filename):
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
 @app.route('/add_member', methods=['GET', 'POST'])
 def add_member():
     uploaded_photo = None  # To pass the uploaded filename to the template
-
+    
     # List all photos in the 'known' folder
     known_photos = [f for f in os.listdir(app.config['UPLOAD_FOLDER']) if allowed_file(f)]
 
     if request.method == 'POST':
+        # Check if the form contains the 'photo' field
         if 'photo' not in request.files:
             flash('No file part')
             return redirect(request.url)
 
         file = request.files['photo']
 
+        # Check if the user selected a file
         if file.filename == '':
             flash('No selected file')
             return redirect(request.url)
 
+        # Check if the file is allowed and save it
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
             uploaded_photo = filename
             flash('Member added successfully!')
 
-            # Refresh the list of known photos after upload
+            # After uploading a new photo, refresh the list of known photos
             known_photos = [f for f in os.listdir(app.config['UPLOAD_FOLDER']) if allowed_file(f)]
 
     return render_template('add_member.html', uploaded_photo=uploaded_photo, known_photos=known_photos)
 
-@app.route('/delete_photo/<filename>', methods=['POST'])
-def delete_photo(filename):
-    # Delete the photo from the known directory
-    file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-    if os.path.exists(file_path):
-        os.remove(file_path)
-        flash(f'{filename} has been deleted.')
-    else:
-        flash(f'{filename} not found.')
-
-    return redirect(url_for('add_member'))
 
 # Route to handle account settings
 @app.route('/account')
@@ -291,47 +276,6 @@ def delete_image(filename):
             return jsonify({'error': 'File not found'}), 404
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-    
-
-@app.route('/add_neighbor', methods=['GET', 'POST'])
-def add_neighbor():
-    global neighbors  # Declare we are using the global neighbors list
-    
-    if request.method == 'POST':
-        # Capture form data with new names
-        neighbor_name = request.form.get('neighbor_name')
-        neighbor_phone = request.form.get('neighbor_phone')
-        neighbor_email = request.form.get('neighbor_email')
-        
-        # Store the neighbor's details
-        neighbor_data = {
-            'neighbor_name': neighbor_name,
-            'neighbor_phone': neighbor_phone,
-            'neighbor_email': neighbor_email
-        }
-        neighbors.append(neighbor_data)
-
-    return render_template('neighbor_details.html', neighbors=neighbors)
-
-@app.route('/delete_neighbor', methods=['POST'])
-def delete_neighbor():
-    global neighbors  # Declare global to modify the list
-    
-    # Retrieve the neighbor's name from the form data
-    neighbor_name = request.form.get('neighbor_name')
-    
-    # Remove the neighbor from the list by name
-    neighbors = [neighbor for neighbor in neighbors if neighbor['neighbor_name'] != neighbor_name]
-    
-    # Redirect back to the neighbor details page
-    return redirect(url_for('add_neighbor'))
-
-@app.route('/trial')
-def trial():
-    return render_template('trial.html')
-@app.route('/settings')
-def settings():
-    return render_template('settings.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
