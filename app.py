@@ -54,7 +54,7 @@ for image_name in os.listdir(known_faces_dir):
         known_face_names.append(os.path.splitext(image_name)[0])
 
 # Video stream URL
-video_url = 'http://192.168.1.112:8080/video'
+video_url = 'http://192.168.229.76:8080/video'
 cap = cv2.VideoCapture(video_url)
 
 # Sending email with the captured image
